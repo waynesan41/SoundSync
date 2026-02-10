@@ -67,3 +67,7 @@ This app addresses public transit reliability challenges by:
 - Route planning with delay forecasting
 - Interactive maps with bus locations
 
+## Database Setup
+
+See `database/README.md` for Docker and MongoDB Compass instructions.
+

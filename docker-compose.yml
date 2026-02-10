@@ -1,0 +1,55 @@
+services:
+  mongo1:
+    image: mongo:7.0
+    container_name: soundsync-mongo1
+    entrypoint: ["/bin/bash", "/docker-entrypoint-initdb.d/entrypoint-wrapper.sh"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
+    ports:
+      - "27017:27017"
+    env_file:
+      - ./database/.env
+    volumes:
+      - ./database/data/mongo1:/data/db
+      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./database/mongo-keyfile:/etc/mongo-keyfile-src:ro
+      - ./database/entrypoint-wrapper.sh:/docker-entrypoint-initdb.d/entrypoint-wrapper.sh:ro
+    networks:
+      - mongo_net
+
+  mongo2:
+    image: mongo:7.0
+    container_name: soundsync-mongo2
+    entrypoint: ["/bin/bash", "/docker-entrypoint-initdb.d/entrypoint-wrapper.sh"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
+    ports:
+      - "27018:27017"
+    env_file:
+      - ./database/.env
+    volumes:
+      - ./database/data/mongo2:/data/db
+      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./database/mongo-keyfile:/etc/mongo-keyfile-src:ro
+      - ./database/entrypoint-wrapper.sh:/docker-entrypoint-initdb.d/entrypoint-wrapper.sh:ro
+    networks:
+      - mongo_net
+
+  mongo3:
+    image: mongo:7.0
+    container_name: soundsync-mongo3
+    entrypoint: ["/bin/bash", "/docker-entrypoint-initdb.d/entrypoint-wrapper.sh"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile"]
+    ports:
+      - "27019:27017"
+    env_file:
+      - ./database/.env
+    volumes:
+      - ./database/data/mongo3:/data/db
+      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./database/mongo-keyfile:/etc/mongo-keyfile-src:ro
+      - ./database/entrypoint-wrapper.sh:/docker-entrypoint-initdb.d/entrypoint-wrapper.sh:ro
+    networks:
+      - mongo_net
+
+networks:
+  mongo_net:
+    driver: bridge
