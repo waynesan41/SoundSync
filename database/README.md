@@ -13,29 +13,35 @@ cd database
 Start:
 
 ```bash
-docker compose -f docker-compose.mac.yml up -d
+docker compose up -d --build
 ```
 
 Wait 30-60 seconds for replica set init.
 
-## MongoDB Compass (macOS)
-
-Preferred (replica set, requires hostnames to resolve):
-
-```
-mongodb://admin:adminpassword@localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0&authSource=admin
-```
-
-If Compass shows `getaddrinfo ENOTFOUND mongo2`, use direct connection to the PRIMARY:
-
-```
-mongodb://admin:adminpassword@localhost:27017/?directConnection=true&authSource=admin
-```
-
-To find the PRIMARY port:
-
+### Check if the Database is set up after a minute.
 ```bash
 docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin --eval "rs.status().members.map(m=>({name:m.name,stateStr:m.stateStr}))"
 ```
+## If it return the following it is good to continue running the scripts.
+```MongoServerError: no replset config has been received```
+### Run the follwing line by line
 
-Use the port of the member with `stateStr: 'PRIMARY'` in the direct connection string.
+Setup Replica Script
+```bash
+docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/mongo-init.js
+```
+
+Set up Database Index and Collection
+```bash
+docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/script/database-setup.js
+```
+
+Set up Sample Data
+```bash
+docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/sample-data.js
+```
+
+#### Use this in MongoDB Compass to connect to Database
+```bash
+mongodb://admin:adminpassword@localhost:27017/?directConnection=true
+```
