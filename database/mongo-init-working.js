@@ -20,20 +20,12 @@ async function waitForPrimary() {
 
 async function initiateReplicaSet() {
     print("mongo-init: initiating replica set...");
-    const envHosts = (process.env.MONGO_RS_HOSTS || "")
-        .split(",")
-        .map(h => h.trim())
-        .filter(Boolean);
-    const membersHosts = envHosts.length === 3
-        ? envHosts
-        : ["mongo1:27017", "mongo2:27017", "mongo3:27017"];
-    print("mongo-init: replica hosts -> " + membersHosts.join(", "));
     const config = {
         _id: "rs0",
         members: [
-            { _id: 0, host: membersHosts[0] },
-            { _id: 1, host: membersHosts[1] },
-            { _id: 2, host: membersHosts[2] }
+            { _id: 0, host: "mongo1:27017" },
+            { _id: 1, host: "mongo2:27017" },
+            { _id: 2, host: "mongo3:27017" }
         ]
     };
 

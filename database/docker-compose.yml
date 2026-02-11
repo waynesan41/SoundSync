@@ -1,0 +1,67 @@
+services:
+  mongo1:
+    build: .
+    container_name: soundsync-mongo1
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile", "--auth" ]
+    ports:
+      - "27017:27017"
+    env_file:
+      - ./.env
+    environment:
+      MONGO_INITDB_DATABASE: soundsync
+      MONGO_RS_HOSTS: host.docker.internal:27017,host.docker.internal:27018,host.docker.internal:27019
+    volumes:
+      - ./data_volume/mongo1:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./public_data/routes.csv:/docker-entrypoint-initdb.d/public_data/routes.csv:ro
+      - ./public_data/stops.csv:/docker-entrypoint-initdb.d/public_data/stops.csv:ro
+      - ./schema/database-setup.js:/docker-entrypoint-initdb.d/script/database-setup.js:ro
+      - ./schema/sample-data.js:/docker-entrypoint-initdb.d/script/sample-data.js:ro
+    networks:
+      - mongo_net
+
+  mongo2:
+    build: .
+    container_name: soundsync-mongo2
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile", "--auth" ]
+    ports:
+      - "27018:27017"
+    env_file:
+      - ./.env
+    environment:
+      MONGO_INITDB_DATABASE: soundsync
+      MONGO_RS_HOSTS: host.docker.internal:27017,host.docker.internal:27018,host.docker.internal:27019
+    volumes:
+      - ./data_volume/mongo2:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./public_data/routes.csv:/docker-entrypoint-initdb.d/public_data/routes.csv:ro
+      - ./public_data/stops.csv:/docker-entrypoint-initdb.d/public_data/stops.csv:ro
+      - ./schema/database-setup.js:/docker-entrypoint-initdb.d/script/database-setup.js:ro
+      - ./schema/sample-data.js:/docker-entrypoint-initdb.d/script/sample-data.js:ro
+    networks:
+      - mongo_net
+
+  mongo3:
+    build: .
+    container_name: soundsync-mongo3
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile", "--auth" ]
+    ports:
+      - "27019:27017"
+    env_file:
+      - ./.env
+    environment:
+      MONGO_INITDB_DATABASE: soundsync
+      MONGO_RS_HOSTS: host.docker.internal:27017,host.docker.internal:27018,host.docker.internal:27019
+    volumes:
+      - ./data_volume/mongo3:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./public_data/routes.csv:/docker-entrypoint-initdb.d/public_data/routes.csv:ro
+      - ./public_data/stops.csv:/docker-entrypoint-initdb.d/public_data/stops.csv:ro
+      - ./schema/database-setup.js:/docker-entrypoint-initdb.d/script/database-setup.js:ro
+      - ./schema/sample-data.js:/docker-entrypoint-initdb.d/script/sample-data.js:ro
+    networks:
+      - mongo_net
+
+networks:
+  mongo_net:
+    driver: bridge

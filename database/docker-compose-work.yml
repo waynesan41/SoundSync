@@ -1,0 +1,52 @@
+services:
+  mongo1:
+    build: ./database
+    container_name: soundsync-mongo1
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile", "--auth" ]
+    ports:
+      - "27017:27017"
+    env_file:
+      - ./database/.env
+    environment:
+      MONGO_INITDB_DATABASE: soundsync
+    volumes:
+      - ./database/data/mongo1:/data/db
+      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - mongo_net
+
+  mongo2:
+    build: ./database
+    container_name: soundsync-mongo2
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile", "--auth" ]
+    ports:
+      - "27018:27017"
+    env_file:
+      - ./database/.env
+    environment:
+      MONGO_INITDB_DATABASE: soundsync
+    volumes:
+      - ./database/data/mongo2:/data/db
+      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - mongo_net
+
+  mongo3:
+    build: ./database
+    container_name: soundsync-mongo3
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/etc/mongo-keyfile", "--auth" ]
+    ports:
+      - "27019:27017"
+    env_file:
+      - ./database/.env
+    environment:
+      MONGO_INITDB_DATABASE: soundsync
+    volumes:
+      - ./database/data/mongo3:/data/db
+      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - mongo_net
+
+networks:
+  mongo_net:
+    driver: bridge
