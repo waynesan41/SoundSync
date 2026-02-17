@@ -1,6 +1,5 @@
 const appDb = db.getSiblingDB("soundsync");
 
-// Creates the `users` collection with validation for login-based accounts.
 try {
   appDb.createCollection("users", {
     validator: {
@@ -10,14 +9,11 @@ try {
         properties: {
           email: { bsonType: "string" },
           passwordHash: { bsonType: "string" },
-
           handle: { bsonType: "string" },
-
           favoriteBusRoutes: {
             bsonType: "array",
             items: { bsonType: "string" }
           },
-
           notifications: {
             bsonType: "object",
             properties: {
@@ -40,20 +36,16 @@ try {
       }
     }
   });
-} catch (e) {
-  // Collection may already exist
-}
+} catch (e) {}
 
-// Ensures emails are unique for account login.
 try {
   appDb.users.createIndex({ email: 1 }, { unique: true });
-} catch (e) {
-  // Index may already exist
-}
+} catch (e) {}
 
-// Optionally ensures handles are unique (nice for display usernames).
 try {
   appDb.users.createIndex({ handle: 1 }, { unique: true, sparse: true });
-} catch (e) {
-  // Index may already exist
-}
+} catch (e) {}
+
+try {
+  appDb.users.createIndex({ "notifications.enabled": 1 });
+} catch (e) {}
