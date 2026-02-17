@@ -1,73 +1,121 @@
-# Transit Reliability App
+```md
+# SoundSync — Bellevue Transit Reliability App
 
-A next-generation transit app combining real-time data, historical reliability analysis, and AI-powered predictions to help riders make informed transit decisions.
+A localized transit reliability platform built for the Bellevue, WA region.
+
+---
+
+## 👥 Team
+
+- **Tony Che** — Integration Lead  
+- **Abshira** — Frontend (Flutter)  
+- **Wayne** — Backend (Go + MongoDB)  
+- **Nolan** — Analysis / LLM Integration  
+
+---
 
 ## Overview
 
-This app addresses public transit reliability challenges by:
-- Providing real-time bus tracking with reliability scores
-- Offering AI-enhanced arrival predictions using historical data
-- Helping users plan routes based on actual transit performance
-- Supporting city planners with data-driven insights for route improvements
+SoundSync addresses public transit reliability challenges in Bellevue by:
+
+- Providing real-time route information
+- Collecting structured rider reports (delay, crowding, cleanliness)
+- Generating reliability / confidence indicators
+- Maintaining a versioned REST API (`/v1`)
+- Supporting clean separation between frontend, backend, and database
+
+
+---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND LAYER                            │
-│  ┌──────────────────────┐      ┌──────────────────────┐        │
-│  │   React Native App   │      │   React Web App      │        │
-│  │   (iOS + Android)    │      │                      │        │
-│  └──────────────────────┘      └──────────────────────┘        │
-│           │                              │                       │
-│           └──────────────┬───────────────┘                      │
-└────────────────────────────│────────────────────────────────────┘
-                             │ HTTPS / WebSocket
-┌────────────────────────────│────────────────────────────────────┐
-│                        BACKEND LAYER                             │
-│                             │                                    │
-│  ┌──────────────────────────▼────────────────────────┐          │
-│  │              API Gateway (Express.js)              │          │
-│  └───────┬──────────────────┬───────────────┬────────┘          │
-│          │                  │               │                    │
-│  ┌───────▼────────┐  ┌──────▼──────┐  ┌────▼─────────┐         │
-│  │ ML Prediction  │  │Data Collector│  │ Reliability  │         │
-│  │    Engine      │  │   Service    │  │   Analyzer   │         │
-│  └────────────────┘  └──────────────┘  └──────────────┘         │
-│          │                  │               │                    │
-│  ┌───────▼──────────────────▼───────────────▼────────┐          │
-│  │         Cache (Redis) + Database (PostgreSQL)      │          │
-│  └────────────────────────────────────────────────────┘          │
-└────────────────────────────│────────────────────────────────────┘
-                             │ API Calls
-┌────────────────────────────│────────────────────────────────────┐
-│                  EXTERNAL SERVICES LAYER                         │
-│                             │                                    │
-│  ┌──────────┐  ┌────────────▼──┐  ┌────────────┐  ┌─────────┐ │
-│  │ Google   │  │  OneBusAway   │  │   Claude   │  │ Weather │ │
-│  │ Maps API │  │      API      │  │  LLM API   │  │   API   │ │
-│  └──────────┘  └───────────────┘  └────────────┘  └─────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
+        FRONTEND
+
+   Flutter Application
+   (iOS / Android)
+
+            │ HTTPS
+            ▼
+
+         BACKEND
+
+   Go REST API (/v1)
+
+      • GET /v1/routes
+      • GET /v1/routes/:id
+      • Standardized JSON response envelope
+      • Reliability scoring logic
+
+            │
+            ▼
+
+   MongoDB
+
+      • users
+      • routes
+      • stops
+      • reports (unified event model)
+
+            │
+            ▼
+
+   EXTERNAL SERVICES
+
+   - OneBusAway API
+   (Bellevue real-time transit data)
+
+   - Sound Transit Open Transit Data (OTD)
+   (Static schedules / GTFS data)
+
+   - Power BI Government Transit Dashboard
+   (Public transit analytics & metrics)
+
+```                               
 
 ## Tech Stack
 
-**Frontend:** React Native (Mobile), React.js (Web)  
-**Backend:** Express.js, Python  
-**Database:** PostgreSQL with PostGIS  
-**Cache:** Redis  
-**AI/ML:** Claude API (Anthropic), scikit-learn  
-**Infrastructure:** Docker, AWS
+**Frontend:** Flutter (iOS / Android)  
+**Backend:** Go (REST API)  
+**Database:** MongoDB  
+**External Data:** OneBusAway API, Sound Transit Open Transit Data, Power BI Government Transit Dashboard
 
-## Key Features
+---
 
-- Real-time bus tracking with live arrival predictions
-- Historical reliability scoring by route and time of day
-- AI-enhanced predictions using LLM analysis
-- Route planning with delay forecasting
-- Interactive maps with bus locations
+API Design
+
+Endpoint specifications are documented in:
+
+docs/API_CONTRACT_v1.md
+
+```
+
+---
+
+## Data Model
+
+MongoDB collections:
+
+* `users`
+* `routes`
+* `stops`
+* `reports`
+
+### Unified Report Structure
+
+```json
+{
+  "userId": "...",
+  "type": "delay | crowding | cleanliness",
+  "routeId": "string",
+  "stopId": "string",
+  "directionId": 0,
+  "value": number,
+  "at": "Mongo Date",
+  "expiresAt": "Mongo Date (optional)"
+}
+```
 
 ## Database Setup
 
-See `database/README.md` for Docker and MongoDB Compass instructions.
-
+See `database/README.md` for MongoDB setup instructions.
