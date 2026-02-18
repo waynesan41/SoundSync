@@ -74,10 +74,12 @@ iOS — ios/Runner/AppDelegate.swift:
 swiftGMSServices.provideAPIKey("YOUR_API_KEY")
 Web — web/index.html:
 html<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+
 4. Backend (Wayne)
 bashcd backend/
 go run main.go
 Backend runs on http://localhost:8080 by default.
+
 5. Environment Config
 The app uses mock data by default. To connect to the live backend, update lib/config/api_config.dart:
 dartstatic const bool useMockData = false;  // flip to true for mock
