@@ -16,55 +16,30 @@ Giving riders confidence scores so they know when to leave
 We're not competing with Google Maps on features. We're solving something Google doesn't care about: making riders feel seen.
 
 Team
-NameRoleFocusAbshiraFrontend (Flutter)Dart models, API parsing, UI screensWayneBackend (Golang + MongoDB)REST endpoints, JSON contractsNolanLLM Integration/llm/explain endpoint, AI predictionsTonyIntegration LeadJSON schemas, naming conventions, API docs
-Course: CS 455 — Capstone, Bellevue College
+Name:Role:Focus:  AbshiraFrontend (Flutter)Dart models, API parsing, UI screens: Wayne: Backend (Golang + MongoDB)REST endpoints, JSON contracts : Nolan: LLM Integration/llm/explain endpoint, AI predictions: Tony: Integration LeadJSON schemas, naming conventions, API docs
 
-Architecture
-┌─────────────────────────────────────────────────────────────┐
-│                      FRONTEND (Flutter)                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Home Screen  │  │ Route Detail │  │ Search Screen │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │Trip Assistant │  │  Connection  │  │  Crowd Intel  │      │
-│  │              │  │   Checker    │  │              │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-│                          │                                   │
-└──────────────────────────│───────────────────────────────────┘
-                           │ HTTPS (REST)
-┌──────────────────────────│───────────────────────────────────┐
-│                    BACKEND (Golang)                           │
-│  ┌─────────────────────────────────────────────────┐        │
-│  │              Gin / HTTP Router                    │        │
-│  └────────┬──────────────┬──────────────┬──────────┘        │
-│           │              │              │                     │
-│  ┌────────▼──────┐ ┌─────▼──────┐ ┌────▼──────────┐        │
-│  │ GET /routes   │ │GET /route/ │ │POST /llm/     │        │
-│  │   ?query=     │ │   :id      │ │   explain     │        │
-│  └────────┬──────┘ └─────┬──────┘ └────┬──────────┘        │
-│           │              │              │                     │
-│  ┌────────▼──────────────▼──────────────▼──────────┐        │
-│  │                  MongoDB                         │        │
-│  └──────────────────────────────────────────────────┘        │
-└──────────────────────────│───────────────────────────────────┘
-                           │ API Calls
-┌──────────────────────────│───────────────────────────────────┐
-│                  EXTERNAL SERVICES                            │
-│  ┌──────────┐  ┌─────────▼───┐  ┌────────────┐              │
-│  │ Google   │  │ King County │  │  LLM API   │              │
-│  │ Maps SDK │  │ Metro GTFS  │  │ (Claude /  │              │
-│  │          │  │ Static + RT │  │  OpenAI)   │              │
-│  └──────────┘  └─────────────┘  └────────────┘              │
-└──────────────────────────────────────────────────────────────┘
+FRONTEND (Flutter)
+  Home Screen  → Search Screen  → Route Detail 
+  Trip Assistant → Connection Checker → Crowd Intel
+                        │
+                    REST API (HTTPS)
+                        │
+BACKEND (Golang + Gin)
+  GET /routes?query=    GET /route/:id    POST /llm/explain
+                        │
+                      MongoDB
+                        │
+EXTERNAL SERVICES
+  Google Maps SDK    King County Metro GTFS    LLM API (Claude/OpenAI)
 
 Tech Stack
-LayerTechnologyPurposeFrontendFlutter (Dart)Cross-platform mobile + web appState ManagementRiverpodReactive state with providersNavigationGoRouterDeclarative routingMapsGoogle Maps SDKRoute visualization, stop markersBackendGolang (Gin)REST API serverDatabaseMongoDBRoute, stop, and schedule dataLLMClaude / OpenAI APIAI-powered transit predictionsTransit DataKing County Metro GTFSStatic schedules + real-time feeds
+Layer Technology Purpose Frontend Flutter (Dart)Cross-platform mobile + web appState ManagementRiverpodReactive state with providers Navigation GoRouter Declarative routing Maps Google Maps SDKRoute visualization, stop markersBackendGolang (Gin)REST API server Database MongoDB Route, stop, and schedule dataLLMClaude / OpenAI APIAI-powered transit predictions Transit DataKing County Metro GTFSStatic schedules + real-time feeds
 
 Screens
-ScreenStatusDescriptionHome✅ BuiltRoute list with search, reliability scoresSearch✅ BuiltFilter routes by name or numberRoute Detail✅ BuiltMap view with stops, arrival times, confidenceTrip Assistant🔲 PlannedAI chatbot — "Will I make my 2pm class?"Connection Checker🔲 PlannedTransfer success rates between routesCrowd Intel🔲 PlannedCommunity-reported delays and conditionsAlternative Routes🔲 PlannedDelay alerts with backup route optionsAI Route Finder🔲 PlannedSmart trip planning with AI reasoning
+Screen Status Description Home: BuiltRoute list with search, reliability scoresSearch:  BuiltFilter routes by name or numberRoute Detail: BuiltMap view with stops, arrival times, confidenceTrip Assistant PlannedAI chatbot — "Will I make my 2pm class?"Connection Checker PlannedTransfer success rates between routesCrowd Intel PlannedCommunity-reported delays and conditionsAlternative Routes PlannedDelay alerts with backup route optionsAI Route Finder PlannedSmart trip planning with AI reasoning
 
 API Endpoints
-MethodEndpointOwnerDescriptionGET/routes?query=WayneSearch routes, returns listGET/route/:idWayneRoute detail with stops and schedulePOST/llm/explainNolanAI-powered route explanation
+Method Endpoint Owner Description GET/routes? query= Wayne Search routes, returns listGET/route/:id WayneRoute detail with stops and schedule POST/ llm/ explain NolanA I-powered route explanation
 All endpoints return standardized JSON with consistent field naming, date formats (ISO 8601), and coordinate formats ({ lat, lng }). See Tony's API documentation for full schemas.
 
 Quick Start
@@ -140,7 +115,8 @@ soundsync/
 └── README.md
 
 Sprint Progress
-SprintPeriodFocusStatusSprint 1Jan 7–20Design — UI screens, SRS, presentation CompleteSprint 2Jan 23 – Feb 7Setup — Flutter project, map, bus stops CompleteSprint 3Feb 8–21Core — Routes, arrivals, navigation🔄 In ProgressSprint 4Feb 22 – Mar 7Live Data — GTFS-RT integration🔲 UpcomingSprint 5Mar 8–21Polish — Presentation-ready prototype🔲 Upcoming
+Sprint Period Focus Status Sprint 1 Jan 7–20 Design — UI screens, SRS, presentation Complete Sprint 2 Jan 23 – Feb 7 Setup — Flutter project, map, bus stops Complete Sprint 3 Feb 8– 21 Core — Routes, arrivals, navigation In Progress Sprint 4 Feb 22 – Mar 7 Live Data — GTFS-RT integration Upcoming Sprint 5 Mar 8–21 Polish — Presentation - ready prototype Upcoming
+
 What's Done
 
 Flutter project scaffolded with Riverpod + GoRouter
