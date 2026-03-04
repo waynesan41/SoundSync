@@ -13,7 +13,14 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final _controller = TextEditingController();
-  List<TransitRoute> _results = MockData.routes;
+  bool _loading = true;
+  List<TransitRoute> _results = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoutes();
+  }
 
   @override
   void dispose() {
@@ -21,10 +28,27 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
+  // TODO: replace with Wayne's GET /routes?query=
+  Future<void> _loadRoutes() async {
+    setState(() => _loading = true);
+    await Future.delayed(const Duration(milliseconds: 400));
+    setState(() { _results = MockData.routes; _loading = false; });
+  }
+
   void _onSearch(String query) {
-    setState(() {
-      _results = MockData.searchRoutes(query);
-    });
+    setState(() { _results = MockData.searchRoutes(query); });
+  }
+
+  // need to convert to NearbyRoute for route detail screen
+  NearbyRoute _toNearby(TransitRoute r) {
+    final arrivals = {'271': 4, 'B Line': 8, '245': 12, '550': 15, '241': 22, '556': 18};
+    final conf = {'271': 94, 'B Line': 87, '245': 91, '550': 82, '241': 88, '556': 79};
+    return NearbyRoute(
+      id: r.shortName,
+      destination: r.longName.split(' to ').length > 1 ? r.longName.split(' to ').last : r.longName,
+      arrivalMin: arrivals[r.shortName] ?? 10,
+      confidence: conf[r.shortName] ?? 85,
+    );
   }
 
   @override
@@ -34,7 +58,6 @@ class _SearchScreenState extends State<SearchScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Search header
             Container(
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
@@ -53,120 +76,73 @@ class _SearchScreenState extends State<SearchScreen> {
                         hintText: 'Search routes (e.g. 271, B Line)...',
                         prefixIcon: const Icon(Icons.search_rounded, size: 20),
                         suffixIcon: _controller.text.isNotEmpty
-                            ? IconButton(
-                                onPressed: () {
-                                  _controller.clear();
-                                  _onSearch('');
-                                },
-                                icon: const Icon(Icons.close_rounded, size: 18),
-                              )
-                            : null,
+                          ? IconButton(
+                              onPressed: () { _controller.clear(); _onSearch(''); },
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                            )
+                          : null,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-
             const Divider(height: 1),
-
-            // Results
             Expanded(
-              child: _results.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.search_off_rounded,
-                            size: 48,
-                            color: AppTheme.textSecondary.withOpacity(0.4),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'No routes found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
+              child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _results.isEmpty
+                  ? Center(child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search_off_rounded, size: 48,
+                          color: AppTheme.textSecondary.withOpacity(0.4)),
+                        const SizedBox(height: 12),
+                        const Text('No routes found',
+                          style: TextStyle(fontSize: 16, color: AppTheme.textSecondary)),
+                      ],
+                    ))
                   : ListView.builder(
                       itemCount: _results.length,
                       padding: const EdgeInsets.all(16),
-                      itemBuilder: (context, index) {
-                        final route = _results[index];
+                      itemBuilder: (context, i) {
+                        final route = _results[i];
                         return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => RouteDetailScreen(
-                                  routeId: route.id,
-                                ),
-                              ),
-                            );
-                          },
+                          onTap: () => Navigator.push(context,
+                            MaterialPageRoute(builder: (_) =>
+                              RouteDetailScreen(route: _toNearby(route)))),
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
+                              color: Colors.white, borderRadius: BorderRadius.circular(14),
                               border: Border.all(color: AppTheme.border),
                             ),
                             child: Row(
                               children: [
                                 Container(
-                                  width: 52,
-                                  height: 52,
+                                  width: 52, height: 52,
                                   decoration: BoxDecoration(
                                     color: route.routeColor.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                                    borderRadius: BorderRadius.circular(12)),
                                   alignment: Alignment.center,
-                                  child: Text(
-                                    route.shortName,
+                                  child: Text(route.shortName,
                                     style: TextStyle(
-                                      fontSize: route.shortName.length > 3
-                                          ? 13
-                                          : 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: route.routeColor,
-                                    ),
-                                  ),
+                                      fontSize: route.shortName.length > 3 ? 13 : 18,
+                                      fontWeight: FontWeight.w700, color: route.routeColor)),
                                 ),
                                 const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        route.longName,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.textPrimary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        route.agencyName,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: AppTheme.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: AppTheme.textSecondary,
-                                ),
+                                Expanded(child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(route.longName,
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                                    const SizedBox(height: 4),
+                                    Text(route.agencyName,
+                                      style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                                  ],
+                                )),
+                                const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary),
                               ],
                             ),
                           ),
