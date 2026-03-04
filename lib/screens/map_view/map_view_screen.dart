@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../services/api_service.dart';
 import '../../services/mock_data.dart';
 import '../../widgets/route_badge.dart';
 import '../route_detail/route_detail_screen.dart';
@@ -22,15 +23,11 @@ class _MapViewScreenState extends State<MapViewScreen> {
     _loadNearby();
   }
 
-  // TODO: pull from Wayne's API + add real location
   Future<void> _loadNearby() async {
     setState(() { _loading = true; _error = false; });
     try {
-      await Future.delayed(const Duration(milliseconds: 600));
-      setState(() {
-        _routes = MockData.nearbyRoutes;
-        _loading = false;
-      });
+      final routes = await ApiService.fetchArrivals();
+      setState(() { _routes = routes; _loading = false; });
     } catch (e) {
       setState(() { _error = true; _loading = false; });
     }

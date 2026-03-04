@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
+import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,12 +15,35 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _signingIn = false;
+  String? _errorMsg;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    final input = _emailController.text.trim();
+    final pass  = _passwordController.text;
+    if (input.isEmpty || pass.isEmpty) {
+      setState(() => _errorMsg = 'Please enter your email and password.');
+      return;
+    }
+    setState(() { _signingIn = true; _errorMsg = null; });
+    try {
+      final token = await ApiService.login(input, pass);
+      await AuthService.saveToken(token);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()));
+    } catch (e) {
+      setState(() { _errorMsg = e.toString().replaceFirst('Exception: ', ''); });
+    } finally {
+      if (mounted) setState(() => _signingIn = false);
+    }
   }
 
   @override
@@ -117,6 +143,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
+              if (_errorMsg != null) ...[
+                const SizedBox(height: 12),
+                Text(_errorMsg!,
+                  style: const TextStyle(color: AppTheme.error, fontSize: 13),
+                  textAlign: TextAlign.center),
+              ],
+
               const SizedBox(height: 32),
 
               // Sign In button
@@ -124,19 +157,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 height: 50,
                 child: FilledButton(
-                  onPressed: () {
-                    // TODO: connect to auth later
-                  },
+                  onPressed: _signingIn ? null : _signIn,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Sign In',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
+                  child: _signingIn
+                    ? const SizedBox(width: 22, height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Sign In',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
               ),
 

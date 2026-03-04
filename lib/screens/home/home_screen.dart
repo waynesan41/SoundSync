@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../services/api_service.dart';
 import '../../services/mock_data.dart';
 import '../../widgets/route_badge.dart';
 import '../route_detail/route_detail_screen.dart';
@@ -25,12 +26,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadRoutes();
   }
 
-  // TODO: swap with Wayne's API
   Future<void> _loadRoutes() async {
     setState(() { _isLoading = true; _hasError = false; });
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
-      setState(() { _routes = MockData.nearbyRoutes; _isLoading = false; });
+      final routes = await ApiService.fetchArrivals();
+      setState(() { _routes = routes; _isLoading = false; });
     } catch (e) {
       setState(() { _hasError = true; _isLoading = false; });
     }
@@ -287,7 +287,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _leaveNowAlert() {
-    final a = MockData.leaveNowAlert;
+    if (_routes.isEmpty) return const SizedBox.shrink();
+    final first = _routes.first;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -302,10 +303,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Leave NOW for Route ${a.routeId}',
+                Text('Leave NOW for Route ${first.id}',
                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppTheme.textPrimary)),
                 const SizedBox(height: 2),
-                Text('Arrives in ${a.arrivalMin} min · ${a.message}',
+                Text('Arrives in ${first.arrivalMin} min · ${first.destination}',
                   style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
               ],
             ),
