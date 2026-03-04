@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"soundsync/backend/internal/api"
+	"soundsync/backend/internal/arrivals"
 	"soundsync/backend/internal/auth"
 	"soundsync/backend/internal/db"
 	"soundsync/backend/internal/notifications"
@@ -56,7 +57,16 @@ func New() (*Runtime, error) {
 
 	predictionSvc := predictions.NewService(database)
 
-	apiHandler := api.NewHandler(authSvc, notifSvc, delaySvc, crowdingSvc, cleanlinessSvc, predictionSvc)
+	pgCfg := db.PGConfig{
+		Host:     envOrDefault("PG_HOST", "localhost"),
+		Port:     envOrDefault("PG_PORT", "5432"),
+		DBName:   envOrDefault("PG_DBNAME", "soundsync"),
+		User:     envOrDefault("PG_USER", "postgres"),
+		Password: envOrDefault("PG_PASSWORD", ""),
+	}
+	arrivalsSvc := arrivals.NewService(pgCfg)
+
+	apiHandler := api.NewHandler(authSvc, notifSvc, delaySvc, crowdingSvc, cleanlinessSvc, predictionSvc, arrivalsSvc)
 
 	mux := http.NewServeMux()
 	apiHandler.Register(mux)

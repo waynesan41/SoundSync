@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"soundsync/backend/internal/arrivals"
 	"soundsync/backend/internal/auth"
 	"soundsync/backend/internal/notifications"
 	"soundsync/backend/internal/predictions"
@@ -16,6 +17,7 @@ type Handler struct {
 	crowdingRepo  *reports.CrowdingService
 	cleanRepo     *reports.CleanlinessService
 	predictionSvc *predictions.Service
+	arrivalsSvc   *arrivals.Service
 }
 
 func NewHandler(
@@ -25,6 +27,7 @@ func NewHandler(
 	crowdingSvc *reports.CrowdingService,
 	cleanlinessSvc *reports.CleanlinessService,
 	predictionSvc *predictions.Service,
+	arrivalsSvc *arrivals.Service,
 ) *Handler {
 	return &Handler{
 		authSvc:       authSvc,
@@ -33,6 +36,7 @@ func NewHandler(
 		crowdingRepo:  crowdingSvc,
 		cleanRepo:     cleanlinessSvc,
 		predictionSvc: predictionSvc,
+		arrivalsSvc:   arrivalsSvc,
 	}
 }
 
@@ -57,6 +61,9 @@ func (h *Handler) Register(mux *http.ServeMux) {
 
 	mux.HandleFunc("GET /api/v1/predictions/delay", h.predictDelay)
 	mux.HandleFunc("GET /api/v1/predictions/crowding", h.predictCrowding)
+
+	mux.HandleFunc("GET /api/v1/arrivals", h.listArrivals)
+	mux.HandleFunc("GET /api/v1/arrivals/stats", h.arrivalStats)
 }
 
 func (h *Handler) health(w http.ResponseWriter, _ *http.Request) {

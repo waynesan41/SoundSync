@@ -286,6 +286,90 @@ curl -s "http://localhost:8080/api/v1/predictions/crowding?routeId=100001&direct
 
 ---
 
+### Arrivals
+
+> Handler: `backend/internal/api/arrival_handlers.go` → `listArrivals()`, `arrivalStats()`
+> Service: `backend/internal/arrivals/service.go` → `List()`, `Stats()`
+> PostgreSQL client: `backend/internal/db/postgres.go`
+> PostgreSQL table: `arrivals` (written by `transit-poller/poller.py`)
+
+These endpoints expose the real-time OBA arrival data collected by the transit poller. Unlike the report endpoints (which store user submissions in MongoDB), these read directly from the PostgreSQL `arrivals` table using a lightweight wire-protocol client built on the Go standard library — no external Postgres driver is required.
+
+#### `GET /api/v1/arrivals`
+Returns recent arrivals sorted newest-first. Results are capped at 200.
+
+**Query params:**
+
+| Param | Required | Description |
+|---|---|---|
+| `routeId` | no | Filter to a specific route (e.g. `100001`) |
+| `stopId` | no | Filter to a specific stop (e.g. `1_67652`) |
+| `limit` | no | Max rows to return (default 50, max 200) |
+
+**Example:**
+```bash
+curl -s "http://localhost:8080/api/v1/arrivals?routeId=100001&limit=10" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:**
+```json
+{
+  "arrivals": [
+    {
+      "id": 42,
+      "stop_id": "1_67652",
+      "route_id": "100001",
+      "trip_id": "...",
+      "headsign": "Downtown Seattle",
+      "scheduled_arrival_ms": 1741082400000,
+      "predicted_arrival_ms": 1741082580000,
+      "delay_seconds": 180,
+      "recorded_at": "2026-03-04 08:30:00.123456"
+    }
+  ]
+}
+```
+
+#### `GET /api/v1/arrivals/stats`
+Aggregates delay data from the last 90 days for a route/stop, broken down by time-of-day bin and day type. Uses the same five time-bin definitions as the prediction model (see **Prediction Model Formulas** above).
+
+**Query params:**
+
+| Param | Required | Description |
+|---|---|---|
+| `routeId` | yes | Route to aggregate for |
+| `stopId` | no | Narrows to a specific stop |
+
+**Example:**
+```bash
+curl -s "http://localhost:8080/api/v1/arrivals/stats?routeId=100001&stopId=1_67652" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:**
+```json
+{
+  "stats": {
+    "route_id": "100001",
+    "stop_id": "1_67652",
+    "total_samples": 450,
+    "overall_avg_delay_seconds": 142.5,
+    "by_time_bin": [
+      {
+        "time_bin": "morning",
+        "day_type": "weekday",
+        "sample_count": 120,
+        "avg_delay_seconds": 95.2,
+        "p90_delay_seconds": 210.0
+      }
+    ]
+  }
+}
+```
+
+---
+
 ### Health Check
 
 > Handler: `backend/internal/api/handler.go` → `health()`
@@ -301,6 +385,8 @@ curl http://localhost:8080/health
 
 ## Setup
 
+### Transit poller
+
 Copy `.env.example` to `.env` and fill in your credentials:
 
 ```
@@ -310,6 +396,18 @@ DB_PORT=5432
 DB_NAME=soundsync
 DB_USER=postgres
 DB_PASSWORD=yourpassword
+```
+
+### Go backend — PostgreSQL connection
+
+The arrivals endpoints connect to the same PostgreSQL instance as the poller. Configure the backend via environment variables (defaults shown):
+
+```
+PG_HOST=localhost
+PG_PORT=5432
+PG_DBNAME=soundsync
+PG_USER=postgres
+PG_PASSWORD=
 ```
 
 Install dependencies and run:
