@@ -11,7 +11,6 @@ services:
       MONGO_INITDB_DATABASE: soundsync
     volumes:
       - ./database/data/mongo1:/data/db
-      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - mongo_net
 
@@ -27,7 +26,6 @@ services:
       MONGO_INITDB_DATABASE: soundsync
     volumes:
       - ./database/data/mongo2:/data/db
-      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - mongo_net
 
@@ -43,7 +41,6 @@ services:
       MONGO_INITDB_DATABASE: soundsync
     volumes:
       - ./database/data/mongo3:/data/db
-      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - mongo_net
 

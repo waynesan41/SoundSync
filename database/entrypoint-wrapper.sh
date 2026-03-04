@@ -29,15 +29,22 @@ docker compose down
 # Check the status of the replica set
 docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin --eval "rs.status().members.map(m=>({name:m.name,stateStr:m.stateStr}))"
 
-# Run mongo-init.js to create the admin users
-docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/mongo-init.js
-docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/script/database-setup.js
-docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/script/sample-data.js
+# Run mongo-replica-setup.js to create the admin users
+docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/mongo-replica-setup.js
+docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/script/shcema-data-setup.js
 
 
 # Connecting to Replica set inside container within network.
 # Go Application will need to run inside this container
 docker exec soundsync-mongo1 mongosh "mongodb://admin:adminpassword@mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0&authSource=admin" --eval "db.adminCommand({ ping: 1 })"
+
+
+
+
+
+
+
+
 
 
 

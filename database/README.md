@@ -28,17 +28,12 @@ docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationD
 
 Setup Replica Script
 ```bash
-docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/mongo-init.js
+docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/mongo-replica-setup.js
 ```
 
-Set up Database Index and Collection
+Set up Schema and Test Data
 ```bash
-docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/script/database-setup.js
-```
-
-Set up Sample Data
-```bash
-docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/sample-data.js
+docker exec soundsync-mongo1 mongosh -u admin -p adminpassword --authenticationDatabase admin /docker-entrypoint-initdb.d/script/shcema-data-setup.js
 ```
 
 #### Use this in MongoDB Compass to connect to Database

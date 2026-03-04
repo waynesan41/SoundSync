@@ -12,9 +12,9 @@
 // use soundsync;
 const fs = require("fs");
 const path = require("path");
-print("database-setup: start");
+print("schema-setup: start");
 db = db.getSiblingDB("soundsync");
-print("database-setup: using database -> " + db.getName());
+print("schema-setup: using database -> " + db.getName());
 
 function parseCsvLine(line) {
     const values = [];
@@ -83,18 +83,24 @@ function readCsvFromCandidates(candidates) {
 }
 
 function importRoutesAndStops() {
-    print("database-setup: importing routes and stops from CSV");
+    print("schema-setup: importing routes and stops from CSV");
     const cwd = process.cwd();
     const routesCsv = readCsvFromCandidates([
+        path.join(cwd, "database/schema/test-data/routes.csv"),
+        path.join(cwd, "schema/test-data/routes.csv"),
         path.join(cwd, "database/public_data/routes.csv"),
         path.join(cwd, "public_data/routes.csv"),
+        "/docker-entrypoint-initdb.d/script/test-data/routes.csv",
         "/docker-entrypoint-initdb.d/public_data/routes.csv",
         "/docker-entrypoint-initdb.d/script/public_data/routes.csv"
     ]);
 
     const stopsCsv = readCsvFromCandidates([
+        path.join(cwd, "database/schema/test-data/stops.csv"),
+        path.join(cwd, "schema/test-data/stops.csv"),
         path.join(cwd, "database/public_data/stops.csv"),
         path.join(cwd, "public_data/stops.csv"),
+        "/docker-entrypoint-initdb.d/script/test-data/stops.csv",
         "/docker-entrypoint-initdb.d/public_data/stops.csv",
         "/docker-entrypoint-initdb.d/script/public_data/stops.csv"
     ]);
@@ -130,11 +136,11 @@ function importRoutesAndStops() {
     }));
 
     if (routeOps.length > 0) {
-        print("database-setup: writing routes collection");
+        print("schema-setup: writing routes collection");
         db.routes.bulkWrite(routeOps, { ordered: false });
     }
     if (stopOps.length > 0) {
-        print("database-setup: writing stops collection");
+        print("schema-setup: writing stops collection");
         db.stops.bulkWrite(stopOps, { ordered: false });
     }
 
@@ -143,7 +149,7 @@ function importRoutesAndStops() {
 }
 
 // ---------- USERS ----------
-print("database-setup: creating users collection + indexes");
+print("schema-setup: creating users collection + indexes");
 db.createCollection("users");
 
 // Optional unique handle (remove if you don't want uniqueness)
@@ -154,19 +160,19 @@ db.users.createIndex({ "notifications.enabled": 1 });
 
 
 // ---------- ROUTES ----------
-print("database-setup: creating routes collection + indexes");
+print("schema-setup: creating routes collection + indexes");
 db.createCollection("routes");
 db.routes.createIndex({ routeId: 1 }, { unique: true });
 
 // ---------- STOPS ----------
-print("database-setup: creating stops collection + indexes");
+print("schema-setup: creating stops collection + indexes");
 db.createCollection("stops");
 db.stops.createIndex({ stopId: 1 }, { unique: true });
 importRoutesAndStops();
 
 
 // ---------- REPORT COLLECTIONS ----------
-print("database-setup: creating report collections");
+print("schema-setup: creating report collections");
 db.createCollection("delay_reports");
 db.createCollection("crowding_reports");
 db.createCollection("cleanliness_reports");
@@ -182,13 +188,13 @@ for (const idx of commonIndexes) {
     db.crowding_reports.createIndex(idx.keys, idx.options);
     db.cleanliness_reports.createIndex(idx.keys, idx.options);
 }
-print("database-setup: created common report indexes");
+print("schema-setup: created common report indexes");
 
 // Optional: index by user activity (handy for rate limiting / history)
 db.delay_reports.createIndex({ userId: 1, at: -1 });
 db.crowding_reports.createIndex({ userId: 1, at: -1 });
 db.cleanliness_reports.createIndex({ userId: 1, at: -1 });
-print("database-setup: created user activity indexes");
+print("schema-setup: created user activity indexes");
 
 
 // ---------- OPTIONAL TTL (auto-delete old reports) ----------
@@ -198,5 +204,8 @@ print("database-setup: created user activity indexes");
 // db.crowding_reports.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 });
 // db.cleanliness_reports.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
-print("database-setup: finished");
+print("schema-setup: finished");
 print("SoundSync collections + indexes created in DB: soundsync");
+
+
+

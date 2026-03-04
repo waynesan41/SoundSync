@@ -1,0 +1,56 @@
+[
+  {
+    "userHandle": "wayne_dev",
+    "routeId": "100001",
+    "stopId": "100",
+    "directionId": 0,
+    "vehicle_id": "veh_100001_001",
+    "report_time": "2026-02-10T20:01:00Z",
+    "delay_minutes": 3
+  },
+  {
+    "userHandle": "wayne_user",
+    "routeId": "100002",
+    "stopId": "10005",
+    "directionId": 1,
+    "vehicle_id": "veh_100002_001",
+    "report_time": "2026-02-10T20:03:00Z",
+    "delay_minutes": 6
+  },
+  {
+    "userHandle": "rider_amy",
+    "routeId": "100003",
+    "stopId": "10010",
+    "directionId": 0,
+    "vehicle_id": "veh_100003_001",
+    "report_time": "2026-02-10T20:06:00Z",
+    "delay_minutes": 2
+  },
+  {
+    "userHandle": "rider_ben",
+    "routeId": "100004",
+    "stopId": "10020",
+    "directionId": 1,
+    "vehicle_id": "veh_100004_001",
+    "report_time": "2026-02-10T20:09:00Z",
+    "delay_minutes": 8
+  },
+  {
+    "userHandle": "rider_chris",
+    "routeId": "100001",
+    "stopId": "100",
+    "directionId": 1,
+    "vehicle_id": "veh_100001_002",
+    "report_time": "2026-02-10T20:12:00Z",
+    "delay_minutes": 1
+  },
+  {
+    "userHandle": "rider_dina",
+    "routeId": "100002",
+    "stopId": "10005",
+    "directionId": 0,
+    "vehicle_id": "veh_100002_002",
+    "report_time": "2026-02-10T20:15:00Z",
+    "delay_minutes": 5
+  }
+]

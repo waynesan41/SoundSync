@@ -1,0 +1,79 @@
+[
+  {
+    "handle": "wayne_dev",
+    "password": "wayne_dev_pass123",
+    "createdDate": "2026-02-05T10:15:00Z",
+    "notifications": {
+      "enabled": true,
+      "subscriptions": [
+        {
+          "routeId": "100001"
+        }
+      ]
+    }
+  },
+  {
+    "handle": "wayne_user",
+    "password": "wayne_user_pass123",
+    "createdDate": "2025-09-18T14:30:00Z",
+    "notifications": {
+      "enabled": true,
+      "subscriptions": [
+        {
+          "routeId": "100002"
+        }
+      ]
+    }
+  },
+  {
+    "handle": "rider_amy",
+    "password": "rider_amy_pass123",
+    "createdDate": "2024-06-11T08:45:00Z",
+    "notifications": {
+      "enabled": true,
+      "subscriptions": [
+        {
+          "routeId": "100003"
+        }
+      ]
+    }
+  },
+  {
+    "handle": "rider_ben",
+    "password": "rider_ben_pass123",
+    "createdDate": "2023-01-27T19:20:00Z",
+    "notifications": {
+      "enabled": false,
+      "subscriptions": []
+    }
+  },
+  {
+    "handle": "rider_chris",
+    "password": "rider_chris_pass123",
+    "createdDate": "2021-04-09T12:00:00Z",
+    "notifications": {
+      "enabled": true,
+      "subscriptions": [
+        {
+          "routeId": "100004"
+        }
+      ]
+    }
+  },
+  {
+    "handle": "rider_dina",
+    "password": "rider_dina_pass123",
+    "createdDate": "2020-03-15T06:10:00Z",
+    "notifications": {
+      "enabled": true,
+      "subscriptions": [
+        {
+          "routeId": "100001"
+        },
+        {
+          "routeId": "100002"
+        }
+      ]
+    }
+  }
+]

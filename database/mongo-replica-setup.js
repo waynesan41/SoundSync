@@ -1,12 +1,12 @@
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 async function waitForPrimary() {
-    print("mongo-init: waiting for primary...");
+    print("mongo-replica-setup: waiting for primary...");
     for (let i = 0; i < 30; i++) {
         try {
             const status = rs.status();
             if (status && status.myState === 1) {
-                print("mongo-init: primary elected.");
+                print("mongo-replica-setup: primary elected.");
                 return true;
             }
         } catch (e) {
@@ -14,12 +14,12 @@ async function waitForPrimary() {
         }
         await sleep(1000);
     }
-    print("mongo-init: primary not elected after timeout.");
+    print("mongo-replica-setup: primary not elected after timeout.");
     return false;
 }
 
 async function initiateReplicaSet() {
-    print("mongo-init: initiating replica set...");
+    print("mongo-replica-setup: initiating replica set...");
     const envHosts = (process.env.MONGO_RS_HOSTS || "")
         .split(",")
         .map(h => h.trim())
@@ -27,7 +27,7 @@ async function initiateReplicaSet() {
     const membersHosts = envHosts.length === 3
         ? envHosts
         : ["mongo1:27017", "mongo2:27017", "mongo3:27017"];
-    print("mongo-init: replica hosts -> " + membersHosts.join(", "));
+    print("mongo-replica-setup: replica hosts -> " + membersHosts.join(", "));
     const config = {
         _id: "rs0",
         members: [
@@ -40,7 +40,7 @@ async function initiateReplicaSet() {
     for (let i = 0; i < 10; i++) {
         try {
             rs.initiate(config);
-            print("mongo-init: rs.initiate() called.");
+            print("mongo-replica-setup: rs.initiate() called.");
             break;
         } catch (e) {
             // likely already initiated or secondaries not ready yet
@@ -50,21 +50,22 @@ async function initiateReplicaSet() {
 }
 
 function createSoundsyncDb() {
-    print("mongo-init: creating soundsync database...");
+    print("mongo-replica-setup: creating soundsync database...");
     const appDb = db.getSiblingDB("soundsync");
     appDb.createCollection("init");
-    print("mongo-init: soundsync database ready.");
+    print("mongo-replica-setup: soundsync database ready.");
 }
 
 (async function () {
-    print("mongo-init: starting.");
+    print("mongo-replica-setup: starting.");
     await initiateReplicaSet();
     const isPrimary = await waitForPrimary();
     if (!isPrimary) {
-        print("mongo-init: exiting without creating users (not primary).");
+        print("mongo-replica-setup: exiting without creating users (not primary).");
         return;
     }
     await sleep(5000);
     createSoundsyncDb();
-    print("mongo-init: finished.");
+    print("mongo-replica-setup: finished.");
 })();
+
