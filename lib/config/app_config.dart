@@ -1,6 +1,6 @@
 class AppConfig {
   // Backend URL - 10.0.2.2 reaches localhost from Android emulator
-  static const String baseURL = 'http://10.0.2.2:8080';
+  static const String baseURL = 'http://localhost:8080';
 
   // Auth
   static const String loginEndpoint  = '/api/v1/auth/login';
