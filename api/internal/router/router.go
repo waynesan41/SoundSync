@@ -1,6 +1,7 @@
 package router
 
 import (
+	"database/sql"
 	"net/http"
 
 	"soundsync/api/internal/config"
@@ -15,7 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func New(cfg *config.Config, db *mongo.Database) http.Handler {
+func New(cfg *config.Config, db *mongo.Database, pgDB *sql.DB) http.Handler {
 	r := chi.NewRouter()
 
 	// Global middleware
@@ -41,6 +42,7 @@ func New(cfg *config.Config, db *mongo.Database) http.Handler {
 	transitSvc := services.NewTransitService(cfg)
 	routeSvc := services.NewRouteService(cfg)
 	weatherSvc := services.NewWeatherService(cfg)
+	reliabilitySvc := services.NewReliabilityService(pgDB)
 
 	// Handlers
 	authH := handlers.NewAuthHandler(authSvc)
@@ -50,6 +52,7 @@ func New(cfg *config.Config, db *mongo.Database) http.Handler {
 	userH := handlers.NewUserHandler(userRepo, favRepo, reportRepo, notifRepo)
 	notifH := handlers.NewNotificationHandler(notifRepo)
 	vehicleReportH := handlers.NewVehicleReportHandler(vehicleReportRepo)
+	reliabilityH := handlers.NewReliabilityHandler(reliabilitySvc)
 
 	// JWT middleware factory
 	jwtAuth := middleware.NewJWTAuth(cfg.JWTSecret)
@@ -75,6 +78,12 @@ func New(cfg *config.Config, db *mongo.Database) http.Handler {
 		// Weather (public)
 		r.Get("/weather", weatherH.GetWeather)
 		r.Get("/weather/hourly", weatherH.GetHourlyForecast)
+
+		// Reliability & prediction (public) — register /summary before /{stopId}
+		r.Get("/reliability/summary", reliabilityH.GetSummary)
+		r.Get("/reliability/{stopId}", reliabilityH.GetStopReliability)
+		r.Get("/reliability/{stopId}/{routeId}", reliabilityH.GetRouteStopReliability)
+		r.Get("/prediction/{stopId}/{routeId}", reliabilityH.GetPrediction)
 
 		// Vehicle reports (auth-guarded)
 		r.Group(func(r chi.Router) {

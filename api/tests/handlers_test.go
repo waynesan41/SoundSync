@@ -19,6 +19,8 @@ import (
 	"testing"
 	"time"
 
+	"database/sql"
+
 	"soundsync/api/internal/config"
 	"soundsync/api/internal/router"
 
@@ -76,7 +78,7 @@ func TestMain(m *testing.M) {
 		MongoURI:  mongoURI,
 	}
 
-	handler := router.New(cfg, testDB)
+	handler := router.New(cfg, testDB, (*sql.DB)(nil))
 	testServer = httptest.NewServer(handler)
 
 	code := m.Run()

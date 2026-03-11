@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_client.dart';
 import '../services/route_planning_service.dart';
+import 'reliability_card.dart';
 
 class TransitRouteSheet extends StatelessWidget {
   final String destinationName;
@@ -527,132 +529,156 @@ class _WalkStepRowState extends State<_WalkStepRow> {
 }
 
 /// Transit step — solid connector line, tappable departure/arrival stops.
-class _TransitStepRow extends StatelessWidget {
+class _TransitStepRow extends ConsumerWidget {
   final RouteStep step;
   final bool isLast;
   const _TransitStepRow({required this.step, this.isLast = false});
 
-  void _showStopDetail(BuildContext context, String stopName,
-      {required bool isDeparture}) {
+  void _showStopDetail(
+    BuildContext context,
+    WidgetRef ref,
+    String stopName, {
+    required bool isDeparture,
+    String? stopId,
+  }) {
     final time = isDeparture ? step.stepDepartureTime : step.stepArrivalTime;
     final line = step.lineShortName ?? step.lineName ?? '?';
+    final routeId = step.lineName ?? '';
     final emoji = _vehicleEmoji(step.vehicleType);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF0D1B2A),
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 36, height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            // Stop icon + name
-            Row(
+      builder: (_) => ProviderScope(
+        parent: ProviderScope.containerOf(context),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.55,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, ctrl) => SingleChildScrollView(
+            controller: ctrl,
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: isDeparture
-                        ? const Color(0xFF0F4C81)
-                        : const Color(0xFF1E3A5F),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      isDeparture ? Icons.directions_walk : Icons.place,
-                      color: Colors.white, size: 20,
+                // Drag handle
+                Center(
+                  child: Container(
+                    width: 36, height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isDeparture ? 'Board here' : 'Alight here',
-                        style: const TextStyle(
-                            color: Colors.white54, fontSize: 12),
+
+                // Stop icon + name
+                Row(
+                  children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: isDeparture
+                            ? const Color(0xFF0F4C81)
+                            : const Color(0xFF1E3A5F),
+                        shape: BoxShape.circle,
                       ),
-                      Text(
-                        stopName,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold),
+                      child: Center(
+                        child: Icon(
+                          isDeparture ? Icons.directions_walk : Icons.place,
+                          color: Colors.white, size: 20,
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isDeparture ? 'Board here' : 'Alight here',
+                            style: const TextStyle(
+                                color: Colors.white54, fontSize: 12),
+                          ),
+                          Text(
+                            stopName,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+
+                const SizedBox(height: 20),
+                const Divider(color: Colors.white12, height: 1),
+                const SizedBox(height: 16),
+
+                // Route info
+                _DetailRow(
+                  icon: Text(emoji, style: const TextStyle(fontSize: 18)),
+                  label: 'Route',
+                  value: line +
+                      (step.headsign != null ? ' toward ${step.headsign}' : ''),
+                ),
+
+                if (time != null) ...[
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: const Icon(Icons.access_time,
+                        color: Colors.white54, size: 18),
+                    label: isDeparture ? 'Departs' : 'Arrives',
+                    value: time,
+                  ),
+                ],
+
+                if (isDeparture && step.numStops != null) ...[
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: const Icon(Icons.stop_circle_outlined,
+                        color: Colors.white54, size: 18),
+                    label: 'Stops',
+                    value:
+                        '${step.numStops} stop${step.numStops! > 1 ? 's' : ''} until ${step.arrivalStop ?? 'destination'}',
+                  ),
+                ],
+
+                if (step.agencyName != null) ...[
+                  const SizedBox(height: 12),
+                  _DetailRow(
+                    icon: const Icon(Icons.business,
+                        color: Colors.white54, size: 18),
+                    label: 'Operated by',
+                    value: step.agencyName!,
+                  ),
+                ],
+
+                // Reliability section — shown when OBA stop ID is available
+                if (stopId != null && stopId.isNotEmpty && routeId.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Divider(color: Colors.white12, height: 1),
+                  const SizedBox(height: 16),
+                  RouteReliabilityCard(stopId: stopId, routeId: routeId),
+                ],
               ],
             ),
-
-            const SizedBox(height: 20),
-            const Divider(color: Colors.white12, height: 1),
-            const SizedBox(height: 16),
-
-            // Route info
-            _DetailRow(
-              icon: Text(emoji, style: const TextStyle(fontSize: 18)),
-              label: 'Route',
-              value: line +
-                  (step.headsign != null ? ' toward ${step.headsign}' : ''),
-            ),
-
-            if (time != null) ...[
-              const SizedBox(height: 12),
-              _DetailRow(
-                icon: const Icon(Icons.access_time,
-                    color: Colors.white54, size: 18),
-                label: isDeparture ? 'Departs' : 'Arrives',
-                value: time,
-              ),
-            ],
-
-            if (isDeparture && step.numStops != null) ...[
-              const SizedBox(height: 12),
-              _DetailRow(
-                icon: const Icon(Icons.stop_circle_outlined,
-                    color: Colors.white54, size: 18),
-                label: 'Stops',
-                value:
-                    '${step.numStops} stop${step.numStops! > 1 ? 's' : ''} until ${step.arrivalStop ?? 'destination'}',
-              ),
-            ],
-
-            if (step.agencyName != null) ...[
-              const SizedBox(height: 12),
-              _DetailRow(
-                icon: const Icon(Icons.business,
-                    color: Colors.white54, size: 18),
-                label: 'Operated by',
-                value: step.agencyName!,
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,7 +758,7 @@ class _TransitStepRow extends StatelessWidget {
                   if (step.departureStop != null)
                     GestureDetector(
                       onTap: () => _showStopDetail(
-                          context, step.departureStop!,
+                          context, ref, step.departureStop!,
                           isDeparture: true),
                       child: Row(
                         children: [
@@ -784,7 +810,7 @@ class _TransitStepRow extends StatelessWidget {
                   if (step.arrivalStop != null)
                     GestureDetector(
                       onTap: () => _showStopDetail(
-                          context, step.arrivalStop!,
+                          context, ref, step.arrivalStop!,
                           isDeparture: false),
                       child: Row(
                         children: [
