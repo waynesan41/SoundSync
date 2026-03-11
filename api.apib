@@ -1,5 +1,4 @@
 ---
-
 # Transit API Documentation
 
 ## 1. Standard Response Format
@@ -47,7 +46,51 @@ Example:
 { "lat": number, "lng": number }
 ```
 
-## 4. GET /v1/routes
+## 4. POST /v1/auth/login
+
+Logs in a user and returns a bearer token.
+
+### Request
+
+* Body
+
+```
+{
+  "username": "user@example.com",
+  "password": "password123"
+}
+```
+
+### Response 200 (Success)
+
+* Body
+
+```
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  },
+  "error": null
+}
+```
+
+### Response 401 (Error)
+
+* Body
+
+```
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "INVALID_CREDENTIALS",
+    "message": "Login failed"
+  }
+}
+```
+
+## 5. GET /v1/routes
 
 * Response 200 (application/json)
 
@@ -69,7 +112,7 @@ Example:
 }
 ```
 
-## 5. GET /v1/routes/:id
+## 6. GET /v1/routes/:id
 
 * Response 200 (application/json)
 
@@ -97,7 +140,7 @@ Example:
 }
 ```
 
-## 6. GET /v1/arrivals
+## 7. GET /v1/arrivals
 
 * Response 200 (application/json)
 
@@ -119,7 +162,7 @@ Example:
 }
 ```
 
-## 7. GET /v1/predictions/delay
+## 8. GET /v1/predictions/delay
 
 * Response 200 (application/json)
 
@@ -141,7 +184,7 @@ Example:
 }
 ```
 
-## 8. GET /v1/predictions/crowding
+## 9. GET /v1/predictions/crowding
 
 * Response 200 (application/json)
 
@@ -161,7 +204,7 @@ Example:
 }
 ```
 
-## 9. Error Example
+## 10. Error Example
 
 * Response 404 (application/json)
 
