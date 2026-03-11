@@ -29,6 +29,14 @@
       </label>
     </div>
 
+    <StopMarker
+      v-for="stop in mapStore.nearbyStops"
+      :key="stop.stopId"
+      :stop="stop"
+      :map="map"
+      @click="onStopClick(stop)"
+    />
+
     <VehicleMarker
       v-for="vehicle in displayedVehicles"
       :key="vehicle.vehicleId"
@@ -52,9 +60,10 @@ import { useRouteStore } from '@/stores/routeStore'
 import { loadGoogleMaps } from '@/services/mapsService'
 import { getRouteLookup } from '@/services/routeLookup'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import StopMarker from './StopMarker.vue'
 import VehicleMarker from './VehicleMarker.vue'
 import VehicleReportModal from '@/components/transit/VehicleReportModal.vue'
-import type { VehiclePosition } from '@/types/transit'
+import type { VehiclePosition, Stop } from '@/types/transit'
 
 const mapEl = ref<HTMLElement | null>(null)
 const mapReady = ref(false)
@@ -67,6 +76,10 @@ const reportVehicle = ref<VehiclePosition | null>(null)
 function onVehicleClick(vehicle: VehiclePosition) {
   mapStore.selectVehicle(vehicle.vehicleId)
   reportVehicle.value = vehicle
+}
+
+function onStopClick(stop: Stop) {
+  mapStore.selectStop(stop)
 }
 
 // route_id → short_name lookup (loaded once from CSV)
@@ -100,6 +113,17 @@ onMounted(async () => {
     },
   })
   directionsRenderer.setMap(map.value)
+
+  // Fetch nearby stops whenever the map finishes panning/zooming
+  map.value.addListener('idle', () => {
+    const center = map.value?.getCenter()
+    const zoom = map.value?.getZoom() ?? 0
+    if (center && zoom >= 13) {
+      mapStore.fetchNearbyStops(center.lat(), center.lng(), 600)
+    } else {
+      mapStore.nearbyStops = []
+    }
+  })
 
   mapReady.value = true
   mapStore.startPolling()

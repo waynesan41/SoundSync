@@ -1,6 +1,21 @@
 version: "3.9"
 
 services:
+  postgres:
+    image: postgres:16
+    container_name: soundsync_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PG_DBNAME:-soundsync}
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - soundsync_net
+
   mongo:
     image: mongo:7.0
     container_name: soundsync_mongo
@@ -14,6 +29,22 @@ services:
     volumes:
       - mongo_data:/data/db
       - ./database/mongo-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - soundsync_net
+
+  transit-poller:
+    build: ./transit-poller
+    container_name: soundsync_poller
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      OBA_API_KEY: ${OBA_API_KEY:-TEST}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${PG_DBNAME:-soundsync}
+      DB_USER: ${PG_USER:-postgres}
+      DB_PASSWORD: ${PG_PASSWORD:-postgres}
     networks:
       - soundsync_net
 
@@ -37,6 +68,8 @@ services:
 volumes:
   mongo_data:
     name: soundsync_mongo_data
+  postgres_data:
+    name: soundsync_postgres_data
 
 networks:
   soundsync_net:

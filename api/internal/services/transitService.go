@@ -232,18 +232,148 @@ func devMockVehicles() []models.VehiclePosition {
 	}
 }
 
-// GetNearbyStops returns stops within radius meters of a lat/lng.
-func (s *TransitService) GetNearbyStops(_ context.Context, lat, lng float64, radius int) ([]map[string]interface{}, error) {
-	// TODO: parse GTFS static stops.txt and filter by distance
-	return []map[string]interface{}{
-		{"stopId": "55841", "name": "3rd Ave & Pike St", "lat": 47.6088, "lng": -122.3376},
-	}, nil
+// GetNearbyStops returns stops within radius meters of lat/lng via the OBA API.
+func (s *TransitService) GetNearbyStops(ctx context.Context, lat, lng float64, radius int) ([]map[string]interface{}, error) {
+	url := fmt.Sprintf(
+		"%s/api/where/stops-for-location.json?key=%s&lat=%f&lon=%f&radius=%d",
+		s.cfg.OBABaseURL, s.cfg.OBAApiKey, lat, lng, radius,
+	)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("OBA stops returned status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Data struct {
+			List []struct {
+				ID       string   `json:"id"`
+				Name     string   `json:"name"`
+				Lat      float64  `json:"lat"`
+				Lon      float64  `json:"lon"`
+				RouteIDs []string `json:"routeIds"`
+			} `json:"list"`
+		} `json:"data"`
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+
+	stops := make([]map[string]interface{}, 0, len(result.Data.List))
+	for _, s := range result.Data.List {
+		stops = append(stops, map[string]interface{}{
+			"stopId": s.ID,
+			"name":   s.Name,
+			"lat":    s.Lat,
+			"lng":    s.Lon,
+			"routes": s.RouteIDs,
+		})
+	}
+	return stops, nil
 }
 
-// GetArrivals returns upcoming arrivals for a stop.
-func (s *TransitService) GetArrivals(_ context.Context, stopID string) ([]map[string]interface{}, error) {
-	// TODO: parse GTFS-RT TripUpdates protobuf
-	return []map[string]interface{}{}, nil
+// GetArrivals returns upcoming arrivals for a stop via the OBA API.
+func (s *TransitService) GetArrivals(ctx context.Context, stopID string) ([]map[string]interface{}, error) {
+	url := fmt.Sprintf(
+		"%s/api/where/arrivals-and-departures-for-stop/%s.json?key=%s&minutesAfter=90",
+		s.cfg.OBABaseURL, stopID, s.cfg.OBAApiKey,
+	)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("OBA arrivals returned status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Data struct {
+			Entry struct {
+				ArrivalsAndDepartures []struct {
+					TripID                string `json:"tripId"`
+					RouteID               string `json:"routeId"`
+					RouteShortName        string `json:"routeShortName"`
+					TripHeadsign          string `json:"tripHeadsign"`
+					ScheduledArrivalTime  int64  `json:"scheduledArrivalTime"`
+					PredictedArrivalTime  int64  `json:"predictedArrivalTime"`
+				} `json:"arrivalsAndDepartures"`
+			} `json:"entry"`
+		} `json:"data"`
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+
+	arrivals := make([]map[string]interface{}, 0)
+	for _, a := range result.Data.Entry.ArrivalsAndDepartures {
+		if a.ScheduledArrivalTime == 0 {
+			continue
+		}
+
+		scheduled := time.UnixMilli(a.ScheduledArrivalTime).UTC().Format(time.RFC3339)
+		var estimated *string
+		var delaySec int64
+		status := "UNKNOWN"
+
+		if a.PredictedArrivalTime != 0 {
+			est := time.UnixMilli(a.PredictedArrivalTime).UTC().Format(time.RFC3339)
+			estimated = &est
+			delaySec = (a.PredictedArrivalTime - a.ScheduledArrivalTime) / 1000
+			switch {
+			case delaySec > 60:
+				status = "DELAYED"
+			case delaySec < -60:
+				status = "EARLY"
+			default:
+				status = "ON_TIME"
+			}
+		} else {
+			status = "ON_TIME"
+		}
+
+		entry := map[string]interface{}{
+			"tripId":           a.TripID,
+			"routeId":          a.RouteID,
+			"routeShortName":   a.RouteShortName,
+			"headsign":         a.TripHeadsign,
+			"scheduledArrival": scheduled,
+			"delaySeconds":     delaySec,
+			"status":           status,
+		}
+		if estimated != nil {
+			entry["estimatedArrival"] = *estimated
+		}
+		arrivals = append(arrivals, entry)
+	}
+	return arrivals, nil
 }
 
 func fetchFeed(ctx context.Context, url string) ([]byte, error) {

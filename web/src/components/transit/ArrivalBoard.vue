@@ -3,6 +3,9 @@
     <h3 class="board-title">Upcoming Arrivals</h3>
     <p class="stop-name">{{ stopName }}</p>
 
+    <!-- Reliability card — loads independently, hidden when no data -->
+    <ReliabilityCard :stop-id="stopId" />
+
     <LoadingSpinner v-if="loading" size="24px" />
 
     <p v-else-if="!arrivals.length" class="empty-state">No upcoming arrivals found.</p>
@@ -22,6 +25,11 @@
           <span v-if="arrival.delaySeconds && arrival.delaySeconds > 60" class="delay-badge">
             +{{ Math.round(arrival.delaySeconds / 60) }}m
           </span>
+          <ReliabilityBadge
+            v-if="arrival.routeId"
+            :stop-id="stopId"
+            :route-id="arrival.routeId"
+          />
         </div>
       </li>
     </ul>
@@ -33,6 +41,8 @@ import { ref, watch } from 'vue'
 import type { Arrival } from '@/types/transit'
 import { transitService } from '@/services/transitService'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import ReliabilityCard from './ReliabilityCard.vue'
+import ReliabilityBadge from './ReliabilityBadge.vue'
 
 const props = defineProps<{ stopId: string; stopName?: string }>()
 
