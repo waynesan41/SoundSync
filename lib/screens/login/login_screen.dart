@@ -12,34 +12,77 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
-  Future<void> _login() async {
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _isSignup = false;
+
+  Future<void> _loginOrSignup() async {
     final username = _usernameController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // Read the JSON directly from services/mock_users.json
     final jsonStr = await rootBundle.loadString('lib/services/mock_users.json');
     final data = json.decode(jsonStr);
 
-    bool success = false;
-    for (var user in data["users"]) {
-      if (user["username"] == username && user["password"] == password) {
-        success = true;
-        break;
-      }
-    }
+    if (_isSignup) {
+      // SIGNUP FLOW
 
-    if (success) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
+      if (username.isEmpty || email.isEmpty || password.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please fill all fields")),
+        );
+        return;
+      }
+
+      for (var user in data["users"]) {
+        if (user["username"] == username) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Username already exists")),
+          );
+          return;
+        }
+      }
+
+      data["users"].add({
+        "username": username,
+        "email": email,
+        "password": password
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid username or password")),
+        const SnackBar(content: Text("Account created! Please login.")),
       );
+
+      setState(() {
+        _isSignup = false;
+      });
+
+    } else {
+      // LOGIN FLOW
+
+      bool success = false;
+
+      for (var user in data["users"]) {
+        if ((user["username"] == username || user["email"] == username) &&
+            user["password"] == password) {
+          success = true;
+          break;
+        }
+      }
+
+      if (success) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid username/email or password")),
+        );
+      }
     }
   }
 
@@ -47,6 +90,12 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
+  }
+
+  void _toggleMode() {
+    setState(() {
+      _isSignup = !_isSignup;
+    });
   }
 
   @override
@@ -58,6 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
             children: [
+
               const SizedBox(height: 80),
 
               // Logo + App Name
@@ -93,6 +143,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
+              // Email (signup only)
+              if (_isSignup)
+                Column(
+                  children: [
+                    TextField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: "Email",
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+
               // Password
               TextField(
                 controller: _passwordController,
@@ -117,26 +182,39 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 40),
 
-              // Login Button
+              // Login / Signup Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: FilledButton(
-                  onPressed: _login,
+                  onPressed: _loginOrSignup,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    "Login",
-                    style: TextStyle(fontSize: 16),
+                  child: Text(
+                    _isSignup ? "Create Account" : "Login",
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
+
+              // Toggle Login / Signup
+              TextButton(
+                onPressed: _toggleMode,
+                child: Text(
+                  _isSignup
+                      ? "Already have an account? Login"
+                      : "Create an account",
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ),
+
+              const SizedBox(height: 10),
 
               // Continue as guest
               TextButton(
@@ -153,3 +231,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

@@ -2,14 +2,17 @@
   "users": [
     {
       "username": "tony",
+      "email": "tony@email.com",
       "password": "password123"
     },
     {
       "username": "demo",
+      "email": "demo@email.com",
       "password": "demo123"
     },
     {
       "username": "student",
+      "email": "student@email.com",
       "password": "bellevue"
     }
   ]
