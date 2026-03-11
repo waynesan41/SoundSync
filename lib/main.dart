@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config/theme.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/login/login_screen.dart';
 
 void main() {
   runApp(const SoundSyncApp());
@@ -15,7 +15,8 @@ class SoundSyncApp extends StatelessWidget {
       title: 'SoundSync',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }
+
