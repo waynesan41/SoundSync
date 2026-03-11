@@ -1,0 +1,177 @@
+---
+
+# Transit API Documentation
+
+## 1. Standard Response Format
+
+### Success Response
+
+* Body
+
+```
+{
+  "success": true,
+  "data": {},
+  "error": null
+}
+```
+
+### Error Response
+
+* Body
+
+```
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Error message"
+  }
+}
+```
+
+## 2. Date Format
+
+All timestamps are ISO 8601 UTC strings.
+
+Example:
+
+```
+"2026-02-17T03:21:45.123Z"
+```
+
+## 3. Coordinate Format
+
+```
+{ "lat": number, "lng": number }
+```
+
+## 4. GET /v1/routes
+
+* Response 200 (application/json)
+
+```
+{
+  "success": true,
+  "data": {
+    "routes": [
+      {
+        "id": "271",
+        "shortName": "271",
+        "longName": "Bellevue College to U District",
+        "color": "#3B82F6",
+        "agencyName": "King County Metro"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+## 5. GET /v1/routes/:id
+
+* Response 200 (application/json)
+
+```
+{
+  "success": true,
+  "data": {
+    "route": {
+      "id": "271",
+      "shortName": "271",
+      "longName": "Bellevue College to U District",
+      "color": "#3B82F6",
+      "agencyName": "King County Metro",
+      "polyline": "encoded_polyline_string",
+      "stops": [
+        {
+          "name": "Bellevue College",
+          "time": "3:24 PM",
+          "tag": "Next stop"
+        }
+      ]
+    }
+  },
+  "error": null
+}
+```
+
+## 6. GET /v1/arrivals
+
+* Response 200 (application/json)
+
+```
+{
+  "success": true,
+  "data": {
+    "arrivals": [
+      {
+        "id": "271",
+        "destination": "Seattle",
+        "arrivalMin": 4,
+        "confidence": 94,
+        "status": "early"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+## 7. GET /v1/predictions/delay
+
+* Response 200 (application/json)
+
+```
+{
+  "success": true,
+  "data": {
+    "prediction": {
+      "routeId": "271",
+      "predictedDelayMinutes": 5.0,
+      "percentile90DelayMinutes": 8.0,
+      "confidence": 80.0,
+      "sampleSize": 50,
+      "timeBin": "08:00-09:00",
+      "dayType": "weekday"
+    }
+  },
+  "error": null
+}
+```
+
+## 8. GET /v1/predictions/crowding
+
+* Response 200 (application/json)
+
+```
+{
+  "success": true,
+  "data": {
+    "prediction": {
+      "routeId": "271",
+      "predictedLevel": 3.5,
+      "percentile90Level": 5.0,
+      "confidence": 75.0,
+      "sampleSize": 40
+    }
+  },
+  "error": null
+}
+```
+
+## 9. Error Example
+
+* Response 404 (application/json)
+
+```
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "ROUTE_NOT_FOUND",
+    "message": "Route not found"
+  }
+}
+```
